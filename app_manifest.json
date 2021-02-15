@@ -1,0 +1,10 @@
+{
+  "SchemaVersion": 1,
+  "Name": "BlueSphereRTOS",
+  "ComponentId": "5fd0a884-5c4f-4593-a04d-fbaf911f63b7",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [],
+  "Capabilities": {
+  },
+  "ApplicationType": "RealTimeCapable"
+}
