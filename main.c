@@ -1,56 +1,87 @@
-﻿// Use this app to test the device and SDK installation succeeded, and that you
-// can deploy and debug applications on the real-time core.
+﻿#include <stdbool.h>
 
-#include <stddef.h>
-#include <stdint.h>
+#include "tx_api.h"
+#include "printf.h"
+#include "os_hal_gpio.h"
+#include "os_hal_gpt.h"
 
-extern uint32_t StackTop; // &StackTop == end of TCM
+#define STACK_SIZE         1024
+#define BYTE_POOL_SIZE     8192
 
-static const uintptr_t SCB_BASE = 0xE000ED00;
+TX_THREAD               threadMain;
+TX_BYTE_POOL            byte_pool;
+UCHAR                   memory_area[BYTE_POOL_SIZE];
 
-static _Noreturn void DefaultExceptionHandler(void);
 
-static _Noreturn void RTCoreMain(void);
 
-// ARM DDI0403E.d SB1.5.2-3
-// From SB1.5.3, "The Vector table must be naturally aligned to a power of two whose alignment
-// value is greater than or equal to (Number of Exceptions supported x 4), with a minimum alignment
-// of 128 bytes.". The array is aligned in linker.ld, using the dedicated section ".vector_table".
+//static const os_hal_gpio_pin gpioPin = OS_HAL_GPIO_8;
+//static const os_hal_gpio_pin gpioPin = OS_HAL_GPIO_9;
+static const os_hal_gpio_pin gpioLedPin = OS_HAL_GPIO_10; // RGB LED 0, Blue
+os_hal_gpio_data gpioLedState = OS_HAL_GPIO_DATA_HIGH; // initial state is off (LED is low active)
 
-// The exception vector table contains a stack pointer, 15 exception handlers, and an entry for
-// each interrupt.
-#define INTERRUPT_COUNT 100 // from datasheet
-#define EXCEPTION_COUNT (16 + INTERRUPT_COUNT)
-#define INT_TO_EXC(i_) (16 + (i_))
-const uintptr_t ExceptionVectorTable[EXCEPTION_COUNT] __attribute__((section(".vector_table")))
-__attribute__((used)) = {
-    [0] = (uintptr_t)&StackTop,                // Main Stack Pointer (MSP)
-    [1] = (uintptr_t)RTCoreMain,               // Reset
-    [2] = (uintptr_t)DefaultExceptionHandler,  // NMI
-    [3] = (uintptr_t)DefaultExceptionHandler,  // HardFault
-    [4] = (uintptr_t)DefaultExceptionHandler,  // MPU Fault
-    [5] = (uintptr_t)DefaultExceptionHandler,  // Bus Fault
-    [6] = (uintptr_t)DefaultExceptionHandler,  // Usage Fault
-    [11] = (uintptr_t)DefaultExceptionHandler, // SVCall
-    [12] = (uintptr_t)DefaultExceptionHandler, // Debug monitor
-    [14] = (uintptr_t)DefaultExceptionHandler, // PendSV
-    [15] = (uintptr_t)DefaultExceptionHandler, // SysTick
+/* Define thread prototypes.  */
+void    main_thread(ULONG thread_input);
+void    blink_timer( void );
 
-    [INT_TO_EXC(0)... INT_TO_EXC(INTERRUPT_COUNT - 1)] = (uintptr_t)DefaultExceptionHandler};
+/* Define main entry point.  */
 
-static _Noreturn void DefaultExceptionHandler(void)
+int main(void)
 {
-    for (;;) {
-        // empty.
+    int nWait = 0;
+    // Simple way to catch the debugger on startup. Just change nWait in the debugger to continue
+    while(nWait == 0)
+    {
+        ;
+    }
+
+    /* Enter the ThreadX kernel.  */
+    tx_kernel_enter();
+}
+
+void    tx_application_define(void* first_unused_memory)
+{
+
+    CHAR* pointer;
+
+    // initialize hardware
+    mtk_os_hal_gpio_set_direction(gpioLedPin, OS_HAL_GPIO_DIR_OUTPUT);
+    mtk_os_hal_gpio_set_output(gpioLedPin, OS_HAL_GPIO_DATA_HIGH);
+
+    
+    
+
+    /* Create a byte memory pool from which to allocate the thread stacks.  */
+    tx_byte_pool_create(&byte_pool, "byte pool", memory_area, BYTE_POOL_SIZE);
+
+    /* Put system definition stuff in here, e.g. thread creates and other assorted
+       create information.  */
+
+    /* Allocate the stack for main thread.  */
+    tx_byte_allocate(&byte_pool, (VOID**)&pointer, STACK_SIZE, TX_NO_WAIT);
+
+    /* Create the main thread.  */
+    tx_thread_create(&threadMain, "main thread", main_thread, 0,
+        pointer, STACK_SIZE,
+        1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
+}
+
+void    main_thread(ULONG thread_input)
+{
+    /* Print results.  */
+    printf("**** BlueSphereRTOS \n\n");
+
+
+    /* This thread simply sits in while-forever-blink loop.  */
+    while (1)
+    {
+        
+        /* Sleep for 100 ticks == 1 sec.  */
+        tx_thread_sleep(100);
     }
 }
 
-static _Noreturn void RTCoreMain(void)
+void blink_timer(void)
 {
-    // SCB->VTOR = ExceptionVectorTable
-    *(volatile uint32_t *)(SCB_BASE + 0x08) = (uint32_t)ExceptionVectorTable;
-
-    for (;;) {
-        // empty.
-    }
+    gpioLedState = (gpioLedState==OS_HAL_GPIO_DATA_LOW) ? OS_HAL_GPIO_DATA_HIGH : OS_HAL_GPIO_DATA_LOW;
+    mtk_os_hal_gpio_set_output(gpioLedPin, gpioLedState);
 }
