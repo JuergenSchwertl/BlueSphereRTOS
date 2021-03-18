@@ -2,39 +2,93 @@
 
 #include "tx_api.h"
 #include "printf.h"
+//#include "mt3620.h"
+
+
 #include "os_hal_gpio.h"
+#include "os_hal_pwm.h"
 #include "os_hal_gpt.h"
+
+#define GLOBAL_KICK 0
+#define IO_CTRL 0
+#define POLARITY_SET 1
 
 #define STACK_SIZE         1024
 #define BYTE_POOL_SIZE     8192
 
+//#define DISABLE_LOG_DEBUG
+
+#define log_err(fmt, arg...)\
+	do {\
+		osai_print("[%s]: ", __func__);\
+		osai_print(fmt, ##arg);\
+	} while (0)
+
+#ifndef DISABLE_LOG_DEBUG
+#define log_debug(fmt, arg...)\
+	do {\
+		osai_print("[%s]: ", __func__);\
+		osai_print(fmt, ##arg);\
+	} while (0)
+#else
+#define log_debug(fmt, arg...)
+#endif
+
+
+// threadX specific variables
 TX_THREAD               threadMain;
 TX_BYTE_POOL            byte_pool;
 UCHAR                   memory_area[BYTE_POOL_SIZE];
 
+/** -------------------------------------------------------
+ * PWM Group        , PWM Channel , PWM Bitmap  : GPIO
+ * -------------------------------------------------------
+ *  OS_HAL_PWM_GROUP0, PWM_CHANNEL0, OS_HAL_PWM_0: GPIO0
+ *  OS_HAL_PWM_GROUP0, PWM_CHANNEL1, OS_HAL_PWM_1: GPIO1
+ *  OS_HAL_PWM_GROUP0, PWM_CHANNEL2, OS_HAL_PWM_2: GPIO2
+ *  OS_HAL_PWM_GROUP0, PWM_CHANNEL3, OS_HAL_PWM_3: GPIO3
+ *  OS_HAL_PWM_GROUP1, PWM_CHANNEL0, OS_HAL_PWM_0: GPIO4
+ *  OS_HAL_PWM_GROUP1, PWM_CHANNEL1, OS_HAL_PWM_1: GPIO5
+ *  OS_HAL_PWM_GROUP1, PWM_CHANNEL2, OS_HAL_PWM_2: GPIO6
+ *  OS_HAL_PWM_GROUP1, PWM_CHANNEL3, OS_HAL_PWM_3: GPIO7
+ *  OS_HAL_PWM_GROUP2, PWM_CHANNEL0, OS_HAL_PWM_0: GPIO8 (LED Red)
+ *  OS_HAL_PWM_GROUP2, PWM_CHANNEL1, OS_HAL_PWM_1: GPIO9 (LED Green)
+ *  OS_HAL_PWM_GROUP2, PWM_CHANNEL2, OS_HAL_PWM_2: GPIO10 (LED Blue)
+ *  OS_HAL_PWM_GROUP2, PWM_CHANNEL3, OS_HAL_PWM_3: GPIO11
+ * -------------------------------------------------------
+ */
+
+static const uint8_t uPwmGroup_RgbLed = OS_HAL_PWM_GROUP2;
 
 
-//static const os_hal_gpio_pin gpioPin = OS_HAL_GPIO_8;
-//static const os_hal_gpio_pin gpioPin = OS_HAL_GPIO_9;
-static const os_hal_gpio_pin gpioLedPin = OS_HAL_GPIO_10; // RGB LED 0, Blue
-os_hal_gpio_data gpioLedState = OS_HAL_GPIO_DATA_HIGH; // initial state is off (LED is low active)
+static const uint8_t pwm_channel_led_red = PWM_CHANNEL0;
+static const uint8_t pwm_bitmap_led_red = OS_HAL_PWM_0;
+static const uint32_t pwm_frequency_led_red = 20000;
+static uint32_t pwm_duty_led_red = 300;
+
+static const uint8_t pwm_channel_led_green = PWM_CHANNEL1;
+static const uint8_t pwm_bitmap_led_green = OS_HAL_PWM_1;
+static const uint32_t pwm_frequency_led_green = 20000;
+static uint32_t pwm_duty_led_green = 600;
+
+static const uint8_t pwm_channel_led_blue = PWM_CHANNEL2;
+static const uint8_t pwm_bitmap_led_blue = OS_HAL_PWM_2;
+static const uint32_t pwm_frequency_led_blue = 20000;
+static uint32_t pwm_duty_led_blue = 900;
+
+
+
 
 /* Define thread prototypes.  */
 void    main_thread(ULONG thread_input);
-void    blink_timer( void );
 
 /* Define main entry point.  */
 
 int main(void)
 {
-    int nWait = 0;
-    // Simple way to catch the debugger on startup. Just change nWait in the debugger to continue
-    while(nWait == 0)
-    {
-        ;
-    }
+    printf("BlueSphereRTOS app is starting\n");
 
-    /* Enter the ThreadX kernel.  */
+     /* Enter the ThreadX kernel.  */
     tx_kernel_enter();
 }
 
@@ -43,12 +97,43 @@ void    tx_application_define(void* first_unused_memory)
 
     CHAR* pointer;
 
+    log_debug("initialize hardware\n");
     // initialize hardware
-    mtk_os_hal_gpio_set_direction(gpioLedPin, OS_HAL_GPIO_DIR_OUTPUT);
-    mtk_os_hal_gpio_set_output(gpioLedPin, OS_HAL_GPIO_DATA_HIGH);
+    
+/* Init PWM */
+	if( mtk_os_hal_pwm_ctlr_init(uPwmGroup_RgbLed, pwm_bitmap_led_blue) != 0 ){
+		log_err("mtk_os_hal_pwm_ctlr_init failed\n");
+		return;
+	}
+    
+	/* Configure PWM */
+	
+	if( mtk_os_hal_pwm_feature_enable(uPwmGroup_RgbLed,
+            pwm_channel_led_blue,
+            GLOBAL_KICK,
+            IO_CTRL,
+            POLARITY_SET) != 0 )
+    {
+        log_err("mtk_os_hal_pwm_feature_enable failed\n");
+        return;
+    }
 
-    
-    
+    if( mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed,
+            pwm_channel_led_blue,
+            pwm_frequency_led_blue,
+            pwm_duty_led_blue) != 0)
+    {
+        log_err("mtk_os_hal_pwm_config_freq_duty_normal failed\n");
+        return;
+    }
+
+    if( mtk_os_hal_pwm_start_normal(uPwmGroup_RgbLed,
+					   pwm_channel_led_blue) != 0){
+        log_err("mtk_os_hal_pwm_start_normal failed\n");
+        return;
+    }
+
+    log_debug("create threads\n");
 
     /* Create a byte memory pool from which to allocate the thread stacks.  */
     tx_byte_pool_create(&byte_pool, "byte pool", memory_area, BYTE_POOL_SIZE);
@@ -63,25 +148,30 @@ void    tx_application_define(void* first_unused_memory)
     tx_thread_create(&threadMain, "main thread", main_thread, 0,
         pointer, STACK_SIZE,
         1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
+
+    log_debug("ends\n");
 }
 
 void    main_thread(ULONG thread_input)
 {
     /* Print results.  */
-    printf("**** BlueSphereRTOS \n\n");
-
+    log_debug("starts\n");
 
     /* This thread simply sits in while-forever-blink loop.  */
     while (1)
     {
-        
-        /* Sleep for 100 ticks == 1 sec.  */
-        tx_thread_sleep(100);
+        pwm_duty_led_blue += 1;
+		if (pwm_duty_led_blue > 1000)
+			pwm_duty_led_blue = 0;
+
+        mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed,
+							pwm_channel_led_blue,
+							pwm_frequency_led_blue,
+							pwm_duty_led_blue);
+
+        /* Sleep for 10 ticks == 1/10 sec.  */
+        tx_thread_sleep(10);
     }
 }
 
-void blink_timer(void)
-{
-    gpioLedState = (gpioLedState==OS_HAL_GPIO_DATA_LOW) ? OS_HAL_GPIO_DATA_HIGH : OS_HAL_GPIO_DATA_LOW;
-    mtk_os_hal_gpio_set_output(gpioLedPin, gpioLedState);
-}
+
