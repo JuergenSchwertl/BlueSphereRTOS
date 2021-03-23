@@ -4,11 +4,12 @@
 cmake_minimum_required (VERSION 3.11)
 
 project (BlueSphereRTOS C ASM)
- 
 azsphere_configure_tools(TOOLS_REVISION "21.02")
 
 set(CMAKE_ASM_FLAGS "-mcpu=cortex-m4")
 add_compile_definitions(OSAI_AZURE_RTOS)
+add_compile_options("-Wunused-variable")
+
 
 set(MTK_OS_HAL_FILES
     mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_adc.c

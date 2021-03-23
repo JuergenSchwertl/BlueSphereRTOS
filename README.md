@@ -26,4 +26,10 @@ Please also follow the instructions on the Extension page to configure your sett
 >The `"AzureSphere.ArmGnuPath"` needs to point to your ARM toolchain (compilers are required to be located in the ...\bin\... subdirectory underneath.
 >In my example I'm referring to the toolchain installed with Visual Studio 2019 Community edition. For Enterprise edition this would be ...\2019\Enterprise\...
 
+# Azure Sphere Sample with Azure RTOS
+
+If you clone this repo, make sure you clone the submodules as well either using
+>git clone https://github.com/JuergenSchwertl/BlueSphereRTOS.git BlueSphereRTOS **--recurse-submodules**
+or after cloning this repo e.g. in Visual Studio Code open the TERMINAL tab and run
+>git submodule update --init --recursive
 

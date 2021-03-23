@@ -5,8 +5,9 @@
   "EntryPoint": "/bin/app",
   "CmdArgs": [],
   "Capabilities": {
-    "Gpio": [ 10 ],
-    "Uart": [ ]
+    "Gpio": [ ],
+    "Uart": [ ],
+    "PWM" : [ "PWM-CONTROLLER-2" ]
   },
   "ApplicationType": "RealTimeCapable"
 }
