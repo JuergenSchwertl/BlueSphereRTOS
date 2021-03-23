@@ -21,6 +21,10 @@
         {
           "name": "ARM_GNU_PATH",
           "value": "${env.DefaultArmToolsetPath}"
+        },
+        {
+          "name": "CMAKE_ASM_COMPILER",
+          "value":  "${env.DefaultArmToolsetPath}\\arm-poky-linux-musleabi-as.exe"
         }
       ]
     },
@@ -40,6 +44,10 @@
         {
           "name": "ARM_GNU_PATH",
           "value": "${env.DefaultArmToolsetPath}"
+        },
+        {
+          "name": "CMAKE_ASM_COMPILER",
+          "value":  "${env.DefaultArmToolsetPath}\\arm-poky-linux-musleabi-as.exe"
         }
       ]
     }

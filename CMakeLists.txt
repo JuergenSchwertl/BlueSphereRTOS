@@ -4,8 +4,8 @@
 cmake_minimum_required (VERSION 3.11)
 
 project (BlueSphereRTOS C ASM)
-
-azsphere_configure_tools(TOOLS_REVISION "21.01")
+ 
+azsphere_configure_tools(TOOLS_REVISION "21.02")
 
 set(CMAKE_ASM_FLAGS "-mcpu=cortex-m4")
 add_compile_definitions(OSAI_AZURE_RTOS)
