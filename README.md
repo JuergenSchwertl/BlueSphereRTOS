@@ -1,8 +1,13 @@
 # Azure RTOS based sample for Azure Sphere
 
-This repo contains an exemplary source for an Azure RTOS project on Azure Sphere an dstep by step instructions on how to get there if you start from scratch.
+If you clone this repo, make sure you clone the submodules as well either using
+>git clone https://github.com/JuergenSchwertl/BlueSphereRTOS.git BlueSphereRTOS **--recurse-submodules**
+or after cloning this repo e.g. in Visual Studio Code open the TERMINAL tab and run
+>git submodule update --init --recursive
 
-Prerequisites:
+This repo contains an exemplary source for an Azure RTOS project on Azure Sphere and step by step instructions on how to get there if you start from scratch.
+
+##Prerequisites:
 Please make sure to have a Windows 10 laptop capable of running Visual Studio 2019 or Visual Studio Code with the Azure Sphere SDK 
 already installed and a free USB port available. 
 * Visual Studio 2019 Download: https://visualstudio.microsoft.com/vs/ <br>
@@ -26,10 +31,5 @@ Please also follow the instructions on the Extension page to configure your sett
 >The `"AzureSphere.ArmGnuPath"` needs to point to your ARM toolchain (compilers are required to be located in the ...\bin\... subdirectory underneath.
 >In my example I'm referring to the toolchain installed with Visual Studio 2019 Community edition. For Enterprise edition this would be ...\2019\Enterprise\...
 
-# Azure Sphere Sample with Azure RTOS
 
-If you clone this repo, make sure you clone the submodules as well either using
->git clone https://github.com/JuergenSchwertl/BlueSphereRTOS.git BlueSphereRTOS **--recurse-submodules**
-or after cloning this repo e.g. in Visual Studio Code open the TERMINAL tab and run
->git submodule update --init --recursive
 
