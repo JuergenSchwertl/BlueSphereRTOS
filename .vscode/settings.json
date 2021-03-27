@@ -9,5 +9,9 @@
         "ARM_GNU_PATH": "${command:azuresphere.ArmGnuPath}"
     },
     "cmake.configureOnOpen": true,
-    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
+    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
+    "files.associations": {
+        "os_hal_uart.h": "c",
+        "mt3620.h": "c"
+    }
 }

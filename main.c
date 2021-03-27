@@ -2,9 +2,6 @@
 
 #include "tx_api.h"
 #include "printf.h"
-//#include "mt3620.h"
-
-
 #include "os_hal_gpio.h"
 #include "os_hal_pwm.h"
 #include "os_hal_gpt.h"
@@ -20,15 +17,19 @@
 
 #define log_err(fmt, arg...)\
 	do {\
-		osai_print("[%s]: ", __func__);\
-		osai_print(fmt, ##arg);\
+		printf_(__func__);\
+        _putchar(':');\
+		printf_(fmt, ##arg);\
+        _putchar('\r');\
 	} while (0)
 
 #ifndef DISABLE_LOG_DEBUG
 #define log_debug(fmt, arg...)\
 	do {\
-		osai_print("[%s]: ", __func__);\
-		osai_print(fmt, ##arg);\
+		printf_(__func__);\
+        _putchar(':');\
+		printf_(fmt, ##arg);\
+        _putchar('\r');\
 	} while (0)
 #else
 #define log_debug(fmt, arg...)
@@ -39,6 +40,14 @@
 TX_THREAD               threadMain;
 TX_BYTE_POOL            byte_pool;
 UCHAR                   memory_area[BYTE_POOL_SIZE];
+
+typedef enum _errnum_t {
+    STATUS_OK = 0,
+    ERR_HARDWARE_INIT = -1,
+} errnum_t;
+
+//// declare blockFifoSema if you want to use os_hal_mbox_shared_mem.c
+//volatile u8 blockFifoSema;
 
 /** -------------------------------------------------------
  * PWM Group        , PWM Channel , PWM Bitmap  : GPIO
@@ -58,21 +67,21 @@ UCHAR                   memory_area[BYTE_POOL_SIZE];
  * -------------------------------------------------------
  */
 
-static const uint8_t uPwmGroup_RgbLed = OS_HAL_PWM_GROUP2;
+static const pwm_groups uPwmGroup_RgbLed = OS_HAL_PWM_GROUP2;
 
 
-static const uint8_t pwm_channel_led_red = PWM_CHANNEL0;
-static const uint8_t pwm_bitmap_led_red = OS_HAL_PWM_0;
-static const uint32_t pwm_frequency_led_red = 20000;
-static uint32_t pwm_duty_led_red = 300;
+//static const uint8_t pwm_channel_led_red = PWM_CHANNEL0;
+//static const uint8_t pwm_bitmap_led_red = OS_HAL_PWM_0;
+//static const uint32_t pwm_frequency_led_red = 20000;
+//static uint32_t pwm_duty_led_red = 300;
+//
+//static const uint8_t pwm_channel_led_green = PWM_CHANNEL1;
+//static const uint8_t pwm_bitmap_led_green = OS_HAL_PWM_1;
+//static const uint32_t pwm_frequency_led_green = 20000;
+//static uint32_t pwm_duty_led_green = 600;
 
-static const uint8_t pwm_channel_led_green = PWM_CHANNEL1;
-static const uint8_t pwm_bitmap_led_green = OS_HAL_PWM_1;
-static const uint32_t pwm_frequency_led_green = 20000;
-static uint32_t pwm_duty_led_green = 600;
-
-static const uint8_t pwm_channel_led_blue = PWM_CHANNEL2;
-static const uint8_t pwm_bitmap_led_blue = OS_HAL_PWM_2;
+static const pwm_channels pwm_channel_led_blue = PWM_CHANNEL2;
+static const pwms_bit_map pwm_bitmap_led_blue = OS_HAL_PWM_2;
 static const uint32_t pwm_frequency_led_blue = 20000;
 static uint32_t pwm_duty_led_blue = 900;
 
@@ -86,10 +95,51 @@ void    main_thread(ULONG thread_input);
 
 int main(void)
 {
-    printf("BlueSphereRTOS app is starting\n");
-
      /* Enter the ThreadX kernel.  */
     tx_kernel_enter();
+}
+
+
+int init_hardware(void)
+{
+    log_debug("ends");
+    // initialize hardware
+
+    /* Init PWM */
+    if (mtk_os_hal_pwm_ctlr_init(uPwmGroup_RgbLed, pwm_bitmap_led_blue) != 0) {
+        log_err("mtk_os_hal_pwm_ctlr_init failed\n");
+        return ERR_HARDWARE_INIT;
+    }
+
+    /* Configure PWM */
+
+    if (mtk_os_hal_pwm_feature_enable(uPwmGroup_RgbLed,
+        pwm_channel_led_blue,
+        GLOBAL_KICK,
+        IO_CTRL,
+        POLARITY_SET) != 0)
+    {
+        log_err("mtk_os_hal_pwm_feature_enable failed\n");
+        return ERR_HARDWARE_INIT;
+    }
+
+    if (mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed,
+        pwm_channel_led_blue,
+        pwm_frequency_led_blue,
+        pwm_duty_led_blue) != 0)
+    {
+        log_err("mtk_os_hal_pwm_config_freq_duty_normal failed\n");
+        return ERR_HARDWARE_INIT;
+    }
+
+    if (mtk_os_hal_pwm_start_normal(uPwmGroup_RgbLed,
+        pwm_channel_led_blue) != 0) {
+        log_err("mtk_os_hal_pwm_start_normal failed\n");
+        return ERR_HARDWARE_INIT;
+    }
+
+    log_debug("ends");
+    return STATUS_OK;
 }
 
 void    tx_application_define(void* first_unused_memory)
@@ -97,46 +147,12 @@ void    tx_application_define(void* first_unused_memory)
 
     CHAR* pointer;
 
-    log_debug("initialize hardware\n");
-    // initialize hardware
-    
-/* Init PWM */
-	if( mtk_os_hal_pwm_ctlr_init(uPwmGroup_RgbLed, pwm_bitmap_led_blue) != 0 ){
-		log_err("mtk_os_hal_pwm_ctlr_init failed\n");
-		return;
-	}
-    
-	/* Configure PWM */
-	
-	if( mtk_os_hal_pwm_feature_enable(uPwmGroup_RgbLed,
-            pwm_channel_led_blue,
-            GLOBAL_KICK,
-            IO_CTRL,
-            POLARITY_SET) != 0 )
-    {
-        log_err("mtk_os_hal_pwm_feature_enable failed\n");
-        return;
-    }
-
-    if( mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed,
-            pwm_channel_led_blue,
-            pwm_frequency_led_blue,
-            pwm_duty_led_blue) != 0)
-    {
-        log_err("mtk_os_hal_pwm_config_freq_duty_normal failed\n");
-        return;
-    }
-
-    if( mtk_os_hal_pwm_start_normal(uPwmGroup_RgbLed,
-					   pwm_channel_led_blue) != 0){
-        log_err("mtk_os_hal_pwm_start_normal failed\n");
-        return;
-    }
+    init_hardware();
 
     log_debug("create threads\n");
 
     /* Create a byte memory pool from which to allocate the thread stacks.  */
-    tx_byte_pool_create(&byte_pool, "byte pool", memory_area, BYTE_POOL_SIZE);
+    tx_byte_pool_create(&byte_pool, (CHAR *) "byte pool", memory_area, BYTE_POOL_SIZE);
 
     /* Put system definition stuff in here, e.g. thread creates and other assorted
        create information.  */
@@ -145,7 +161,7 @@ void    tx_application_define(void* first_unused_memory)
     tx_byte_allocate(&byte_pool, (VOID**)&pointer, STACK_SIZE, TX_NO_WAIT);
 
     /* Create the main thread.  */
-    tx_thread_create(&threadMain, "main thread", main_thread, 0,
+    tx_thread_create(&threadMain, (CHAR *) "main thread", main_thread, 0,
         pointer, STACK_SIZE,
         1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
 
