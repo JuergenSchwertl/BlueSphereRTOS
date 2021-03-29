@@ -2,6 +2,8 @@
  
  */
 
+#define WAIT_FOR_DEBUGGER
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -10,17 +12,28 @@
 #include "mt3620.h"
 #include "os_hal_uart.h"
 
- /******************************************************************************/
- /* Configurations */
- /******************************************************************************/
-static const uint8_t uart_port_num = OS_HAL_UART_PORT0; // OS_HAL_UART_ISU0; 
-static const mhal_uart_data_len uart_dat_len = UART_DATA_8_BITS;
-static const mhal_uart_parity uart_parity = UART_NONE_PARITY;
-static const mhal_uart_stop_bit uart_stop_bit = UART_STOP_1_BIT;
-static const uint32_t uart_baudrate = 115200;
+ 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-//forward declaration for main() function in main.c 
+//forward declarations 
 int main(void);
+_Noreturn void RTCoreMain(void);
+void _putchar(char character);
+
+#ifdef __cplusplus
+}
+#endif
+
+/******************************************************************************/
+ /* DEBUG UART configurations */
+ /******************************************************************************/
+static const UART_PORT nUartPortNumber = OS_HAL_UART_PORT0; // OS_HAL_UART_ISU0; 
+//static const mhal_uart_data_len nUartDataLength = UART_DATA_8_BITS;
+//static const mhal_uart_parity nUartParity = UART_NONE_PARITY;
+//static const mhal_uart_stop_bit nUartStopBits = UART_STOP_1_BIT;
+//static const uint32_t nUartBaudRate = 115200;
 
 /******************************************************************************/
 /* Application Hooks */
@@ -28,33 +41,33 @@ int main(void);
 // Hook for "printf".
 void _putchar(char character)
 {
-    mtk_os_hal_uart_put_char(uart_port_num, character);
+    mtk_os_hal_uart_put_char(nUartPortNumber, character);
     if (character == '\n')
-        mtk_os_hal_uart_put_char(uart_port_num, '\r');
+        mtk_os_hal_uart_put_char(nUartPortNumber, '\r');
 }
-
-
 
 _Noreturn void RTCoreMain(void)
 {
-
     // Init Vector Table
     NVIC_SetupVectorTable();
 
-    int nWait = 0;
-
+#ifdef WAIT_FOR_DEBUGGER
     // Simple way to catch the debugger on startup. Just change nWait in the debugger to continue
-    while(nWait == 0)
+    volatile int iWait = 0;
+    while(iWait == 0)
     {
         ;
     }
+#endif
 
-    int ret = 0;
     // Init UART
-    mtk_os_hal_uart_ctlr_init(uart_port_num);
-    mtk_os_hal_uart_set_format(uart_port_num, uart_dat_len, uart_parity, uart_stop_bit);
-	mtk_os_hal_uart_set_baudrate(uart_port_num, uart_baudrate);
-    printf("UART Initialized (port_num=%d)\n", uart_port_num);
+    mtk_os_hal_uart_ctlr_init(nUartPortNumber);
+
+    // you can omit the initialisation parameters since mtk_os_hal_uart_ctlr_init() uses 115200,8N1 already 
+ //   mtk_os_hal_uart_set_format(nUartPortNumber, nUartDataLength, nUartParity, nUartStopBits);
+	//mtk_os_hal_uart_set_baudrate(nUartPortNumber, nUartBaudRate);
+    
+    printf("UART Initialized\n");
 
     main();
 

@@ -1,11 +1,17 @@
 {
     "cmake.generator": "Ninja",
     "cmake.buildDirectory": "${workspaceRoot}/out/ARM-${buildType}",
-    "cmake.buildToolArgs": [ "-v" ],
+    "cmake.buildToolArgs": [
+        "-v"
+    ],
     "cmake.configureSettings": {
         "CMAKE_TOOLCHAIN_FILE": "${command:azuresphere.AzureSphereSdkDir}CMakeFiles/AzureSphereRTCoreToolchain.cmake",
         "ARM_GNU_PATH": "${command:azuresphere.ArmGnuPath}"
     },
     "cmake.configureOnOpen": true,
-    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
+    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
+    "files.associations": {
+        "os_hal_uart.h": "c",
+        "mt3620.h": "c"
+    }
 }
