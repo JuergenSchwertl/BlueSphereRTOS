@@ -72,17 +72,17 @@ static const pwm_groups uPwmGroup_RgbLed = OS_HAL_PWM_GROUP2;
 
 //static const uint8_t pwm_channel_led_red = PWM_CHANNEL0;
 //static const uint8_t pwm_bitmap_led_red = OS_HAL_PWM_0;
-//static const uint32_t pwm_frequency_led_red = 20000;
+//static const uint32_t pwm_frequency_led_red = 2;
 //static uint32_t pwm_duty_led_red = 300;
 //
 //static const uint8_t pwm_channel_led_green = PWM_CHANNEL1;
 //static const uint8_t pwm_bitmap_led_green = OS_HAL_PWM_1;
-//static const uint32_t pwm_frequency_led_green = 20000;
+//static const uint32_t pwm_frequency_led_green = 2;
 //static uint32_t pwm_duty_led_green = 600;
 
 static const pwm_channels pwm_channel_led_blue = PWM_CHANNEL2;
 static const pwms_bit_map pwm_bitmap_led_blue = OS_HAL_PWM_2;
-static const uint32_t pwm_frequency_led_blue = 20000;
+static const uint32_t pwm_frequency_led_blue = 2;
 static uint32_t pwm_duty_led_blue = 900;
 
 
