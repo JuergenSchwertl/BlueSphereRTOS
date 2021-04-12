@@ -2,7 +2,7 @@
  
  */
 
-#define WAIT_FOR_DEBUGGER
+//#define WAIT_FOR_DEBUGGER
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -30,10 +30,6 @@ void _putchar(char character);
  /* DEBUG UART configurations */
  /******************************************************************************/
 static const UART_PORT nUartPortNumber = OS_HAL_UART_PORT0; // OS_HAL_UART_ISU0; 
-//static const mhal_uart_data_len nUartDataLength = UART_DATA_8_BITS;
-//static const mhal_uart_parity nUartParity = UART_NONE_PARITY;
-//static const mhal_uart_stop_bit nUartStopBits = UART_STOP_1_BIT;
-//static const uint32_t nUartBaudRate = 115200;
 
 /******************************************************************************/
 /* Application Hooks */
@@ -56,16 +52,12 @@ _Noreturn void RTCoreMain(void)
     volatile int iWait = 0;
     while(iWait == 0)
     {
-        ;
+        __asm__("nop");
     }
 #endif
 
-    // Init UART
+    // Init UART: defaults to uses 115200,8N1
     mtk_os_hal_uart_ctlr_init(nUartPortNumber);
-
-    // you can omit the initialisation parameters since mtk_os_hal_uart_ctlr_init() uses 115200,8N1 already 
- //   mtk_os_hal_uart_set_format(nUartPortNumber, nUartDataLength, nUartParity, nUartStopBits);
-	//mtk_os_hal_uart_set_baudrate(nUartPortNumber, nUartBaudRate);
     
     printf("UART Initialized\n");
 

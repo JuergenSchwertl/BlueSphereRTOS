@@ -7,7 +7,7 @@
   "Capabilities": {
     "Gpio": [ ],
     "Uart": [ ],
-    "PWM" : [ "PWM-CONTROLLER-2" ]
+    "PWM": [ "PWM-CONTROLLER-0", "PWM-CONTROLLER-1", "PWM-CONTROLLER-2" ]
   },
   "ApplicationType": "RealTimeCapable"
 }

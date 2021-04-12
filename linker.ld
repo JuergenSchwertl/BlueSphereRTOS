@@ -43,6 +43,16 @@ SECTIONS
         *(.rodata)
     } >RODATA_REGION
 
+    /* for C++
+    .init_array : {
+        PROVIDE_HIDDEN (__init_array_start = .);
+        KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*)))
+        KEEP (*(.init_array*))
+        PROVIDE_HIDDEN (__init_array_end = .);
+    } >RODATA_REGION
+    */
+
+
     .data : {
         *(.data)
     } >DATA_REGION
@@ -52,6 +62,14 @@ SECTIONS
         *(.bss)
         __bss_end__ = .;
     } >BSS_REGION
+
+    /*
+     __exidx_start = .;
+    .ARM.exidx : {
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+    } >BSS_REGION
+    __exidx_end = .;
+    */
 
 	. = ALIGN(4);
   	end = .;
