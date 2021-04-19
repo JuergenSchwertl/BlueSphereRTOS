@@ -49,48 +49,8 @@ typedef enum _errnum_t {
 //// declare blockFifoSema if you want to use os_hal_mbox_shared_mem.c
 //volatile u8 blockFifoSema;
 
-/** -------------------------------------------------------
- * PWM Group        , PWM Channel , PWM Bitmap  : GPIO
- * -------------------------------------------------------
- *  OS_HAL_PWM_GROUP0, PWM_CHANNEL0, OS_HAL_PWM_0: GPIO0
- *  OS_HAL_PWM_GROUP0, PWM_CHANNEL1, OS_HAL_PWM_1: GPIO1
- *  OS_HAL_PWM_GROUP0, PWM_CHANNEL2, OS_HAL_PWM_2: GPIO2
- *  OS_HAL_PWM_GROUP0, PWM_CHANNEL3, OS_HAL_PWM_3: GPIO3
- *  OS_HAL_PWM_GROUP1, PWM_CHANNEL0, OS_HAL_PWM_0: GPIO4
- *  OS_HAL_PWM_GROUP1, PWM_CHANNEL1, OS_HAL_PWM_1: GPIO5
- *  OS_HAL_PWM_GROUP1, PWM_CHANNEL2, OS_HAL_PWM_2: GPIO6
- *  OS_HAL_PWM_GROUP1, PWM_CHANNEL3, OS_HAL_PWM_3: GPIO7
- *  OS_HAL_PWM_GROUP2, PWM_CHANNEL0, OS_HAL_PWM_0: GPIO8 (LED Red)
- *  OS_HAL_PWM_GROUP2, PWM_CHANNEL1, OS_HAL_PWM_1: GPIO9 (LED Green)
- *  OS_HAL_PWM_GROUP2, PWM_CHANNEL2, OS_HAL_PWM_2: GPIO10 (LED Blue)
- *  OS_HAL_PWM_GROUP2, PWM_CHANNEL3, OS_HAL_PWM_3: GPIO11
- * -------------------------------------------------------
- */
-
-static const pwm_groups uPwmGroup_RgbLed = OS_HAL_PWM_GROUP2;
-
-
-//static const uint8_t pwm_channel_led_red = PWM_CHANNEL0;
-//static const uint8_t pwm_bitmap_led_red = OS_HAL_PWM_0;
-//static const uint32_t pwm_frequency_led_red = 20000;
-//static uint32_t pwm_duty_led_red = 300;
-//
-//static const uint8_t pwm_channel_led_green = PWM_CHANNEL1;
-//static const uint8_t pwm_bitmap_led_green = OS_HAL_PWM_1;
-//static const uint32_t pwm_frequency_led_green = 20000;
-//static uint32_t pwm_duty_led_green = 600;
-
-static const pwm_channels pwm_channel_led_green = PWM_CHANNEL1;
-static const pwms_bit_map pwm_bitmap_led_green = OS_HAL_PWM_1;
-static const uint32_t pwm_frequency_led_green = 2;
-static uint32_t pwm_duty_led_green = 600;
-
-static const pwm_channels pwm_channel_led_blue = PWM_CHANNEL2;
-static const pwms_bit_map pwm_bitmap_led_blue = OS_HAL_PWM_2;
-static const uint32_t pwm_frequency_led_blue = 20000;
-static uint32_t pwm_duty_led_blue = 900;
-
-
+static const os_hal_gpio_pin gpio_led_red = OS_HAL_GPIO_8;
+static bool bLedState = false;
 
 
 /* Define thread prototypes.  */
@@ -106,44 +66,14 @@ int init_hardware(void)
     int iRet = 0;
 
     volatile int iWait = 1;
-    while (iWait == 0)
+    while (iWait)
     {
         __asm__("nop");
     }
 
-    iRet != mtk_os_hal_pwm_ctlr_init(uPwmGroup_RgbLed, pwm_bitmap_led_red | pwm_bitmap_led_green | pwm_bitmap_led_blue);
-    /* Init PWM */
-    if(iRet != 0) {
-        log_err("mtk_os_hal_pwm_ctlr_init failed\n");
-        //return ERR_HARDWARE_INIT;
-    }
-
-    /* Configure PWM */
-    iRet |= mtk_os_hal_pwm_feature_enable(uPwmGroup_RgbLed, pwm_channel_led_red, GLOBAL_KICK, IO_CTRL, POLARITY_SET);
-    iRet |= mtk_os_hal_pwm_feature_enable(uPwmGroup_RgbLed, pwm_channel_led_green, GLOBAL_KICK, IO_CTRL, POLARITY_SET);
-    iRet |= mtk_os_hal_pwm_feature_enable(uPwmGroup_RgbLed, pwm_channel_led_blue, GLOBAL_KICK, IO_CTRL, POLARITY_SET);
-    if ( iRet != 0)
-    {
-        log_err("mtk_os_hal_pwm_feature_enable failed\n");
-        //return ERR_HARDWARE_INIT;
-    }
-
-    iRet |= mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed, pwm_channel_led_red, pwm_frequency_led_red, pwm_duty_led_red);
-    iRet |= mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed, pwm_channel_led_green, pwm_frequency_led_green, pwm_duty_led_green);
-    iRet |= mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed, pwm_channel_led_blue, pwm_frequency_led_blue, pwm_duty_led_blue);
-    if( iRet != 0)
-    {
-        log_err("mtk_os_hal_pwm_config_freq_duty_normal failed\n");
-        //return ERR_HARDWARE_INIT;
-    }
-
-    iRet |= mtk_os_hal_pwm_start_normal(uPwmGroup_RgbLed, pwm_channel_led_red);
-    iRet |= mtk_os_hal_pwm_start_normal(uPwmGroup_RgbLed, pwm_channel_led_green);
-    iRet |= mtk_os_hal_pwm_start_normal(uPwmGroup_RgbLed, pwm_channel_led_blue);
-    if (iRet != 0) {
-        log_err("mtk_os_hal_pwm_start_normal failed\n");
-        //return ERR_HARDWARE_INIT;
-    }
+    /* Init GPIO */
+    mtk_os_hal_gpio_set_direction(gpio_led_red, OS_HAL_GPIO_DIR_OUTPUT);
+    mtk_os_hal_gpio_set_output(gpio_led_red, OS_HAL_GPIO_DATA_HIGH);
 
     log_debug("ends\n");
     return iRet;
@@ -184,17 +114,12 @@ void    main_thread(ULONG thread_input)
     /* This thread simply sits in while-forever-blink loop.  */
     while (1)
     {
-        pwm_duty_led_blue += 100;
-		if (pwm_duty_led_blue > 1000)
-			pwm_duty_led_blue = 0;
+        mtk_os_hal_gpio_set_output(gpio_led_red, (bLedState) ? OS_HAL_GPIO_DATA_HIGH : OS_HAL_GPIO_DATA_LOW);
+        bLedState = !bLedState;
 
-        mtk_os_hal_pwm_config_freq_duty_normal(uPwmGroup_RgbLed,
-							pwm_channel_led_blue,
-							pwm_frequency_led_blue,
-							pwm_duty_led_blue);
 
         /* Sleep for 25 ticks == 25/100 = 1/4  sec.  */
-        tx_thread_sleep(25);
+        tx_thread_sleep(50);
     }
 
     log_debug("ends\n");

@@ -21,7 +21,9 @@ extern "C" {
 int main(void);
 _Noreturn void RTCoreMain(void);
 void _putchar(char character);
-
+typedef void (*InitFunc)(void);
+extern InitFunc __init_array_start;
+extern InitFunc __init_array_end;
 #ifdef __cplusplus
 }
 #endif
@@ -49,8 +51,8 @@ _Noreturn void RTCoreMain(void)
 
 #ifdef WAIT_FOR_DEBUGGER
     // Simple way to catch the debugger on startup. Just change nWait in the debugger to continue
-    volatile int iWait = 0;
-    while(iWait == 0)
+    volatile int iWait = 1;
+    while(iWait)
     {
         __asm__("nop");
     }
@@ -60,6 +62,11 @@ _Noreturn void RTCoreMain(void)
     mtk_os_hal_uart_ctlr_init(nUartPortNumber);
     
     printf("UART Initialized\n");
+
+#ifdef __cplusplus
+    // Call global constructors
+    for (InitFunc* func = &__init_array_start; func < &__init_array_end; ++func) (*func)();
+#endif
 
     main();
 
