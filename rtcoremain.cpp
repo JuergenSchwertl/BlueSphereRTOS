@@ -21,6 +21,9 @@ extern "C" {
 int main(void);
 _Noreturn void RTCoreMain(void);
 void _putchar(char character);
+
+// Initialization function for C++ static constructors
+// normally those would be called by C++ startup code
 typedef void (*InitFunc)(void);
 extern InitFunc __init_array_start;
 extern InitFunc __init_array_end;

@@ -2,38 +2,16 @@
 
 #include "tx_api.h"
 #include "printf.h"
-#include "os_hal_gpio.h"
-#include "os_hal_pwm.h"
 #include "os_hal_gpt.h"
 
-#define GLOBAL_KICK 0
-#define IO_CTRL 0
-#define POLARITY_SET 1
+#include "globals.h"
+#include "Led.h"
+
 
 #define STACK_SIZE         1024
 #define BYTE_POOL_SIZE     8192
 
-//#define DISABLE_LOG_DEBUG
 
-#define log_err(fmt, arg...)\
-	do {\
-		printf_(__func__);\
-        _putchar(':');\
-		printf_(fmt, ##arg);\
-        _putchar('\r');\
-	} while (0)
-
-#ifndef DISABLE_LOG_DEBUG
-#define log_debug(fmt, arg...)\
-	do {\
-		printf_(__func__);\
-        _putchar(':');\
-		printf_(fmt, ##arg);\
-        _putchar('\r');\
-	} while (0)
-#else
-#define log_debug(fmt, arg...)
-#endif
 
 
 // threadX specific variables
@@ -49,13 +27,12 @@ typedef enum _errnum_t {
 //// declare blockFifoSema if you want to use os_hal_mbox_shared_mem.c
 //volatile u8 blockFifoSema;
 
-static const os_hal_gpio_pin gpio_led_red = OS_HAL_GPIO_8;
-static bool bLedState = false;
+
+static Led led(OS_HAL_GPIO_8);
 
 
 /* Define thread prototypes.  */
 void    main_thread(ULONG thread_input);
-
 
 
 
@@ -65,15 +42,11 @@ int init_hardware(void)
     // initialize hardware
     int iRet = 0;
 
-    volatile int iWait = 1;
+    /*volatile int iWait = 1;
     while (iWait)
     {
         __asm__("nop");
-    }
-
-    /* Init GPIO */
-    mtk_os_hal_gpio_set_direction(gpio_led_red, OS_HAL_GPIO_DIR_OUTPUT);
-    mtk_os_hal_gpio_set_output(gpio_led_red, OS_HAL_GPIO_DATA_HIGH);
+    }*/
 
     log_debug("ends\n");
     return iRet;
@@ -114,8 +87,7 @@ void    main_thread(ULONG thread_input)
     /* This thread simply sits in while-forever-blink loop.  */
     while (1)
     {
-        mtk_os_hal_gpio_set_output(gpio_led_red, (bLedState) ? OS_HAL_GPIO_DATA_HIGH : OS_HAL_GPIO_DATA_LOW);
-        bLedState = !bLedState;
+        led.Toggle();
 
 
         /* Sleep for 25 ticks == 25/100 = 1/4  sec.  */

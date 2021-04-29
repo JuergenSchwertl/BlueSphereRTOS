@@ -2,7 +2,7 @@
 #  Licensed under the MIT License.
 
 cmake_minimum_required (VERSION 3.11)
-project (BlueSphereRTOS C ASM)
+project (BlueSphereRTOS C CXX ASM)
 
 azsphere_configure_tools(TOOLS_REVISION "21.02")
 
@@ -16,9 +16,9 @@ message("\r\n**** ${PROJECT_NAME} section\r\n")
 
 # build your project executable
 add_executable (${PROJECT_NAME}
-    "rtcoremain.c" 
-    "main.c" 
-    "tx_initialize_low_level.S")
+    "rtcoremain.cpp" 
+    "main.cpp" 
+    "tx_initialize_low_level.S" "Led.cpp")
 
 
 ##################################################################
