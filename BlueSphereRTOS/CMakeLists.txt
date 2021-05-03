@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.11)
 project (BlueSphereRTOS C CXX ASM)
 
-azsphere_configure_tools(TOOLS_REVISION "21.02")
+azsphere_configure_tools(TOOLS_REVISION "21.04")
 
 # set global options 
 set(CMAKE_ASM_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall")
@@ -18,9 +18,9 @@ message("\r\n**** ${PROJECT_NAME} section\r\n")
 add_executable (${PROJECT_NAME}
     "../startup/rtcoremain.cpp" 
     "../startup/tx_initialize_low_level.S" 
-    "./src/Led.cpp" 
-    "./src/BlinkingLed.cpp" 
-    "./src/main.cpp" 
+    "src/Led.cpp" 
+    "src/BlinkingLed.cpp" 
+    "src/main.cpp" 
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC "./inc")
@@ -89,8 +89,13 @@ add_library(${MTK_OS_HAL} ${MTK_OS_HAL_FILES})
 
 # add the OS_HAL, M4 Driver & BSP header directories
 target_include_directories(${MTK_OS_HAL} PUBLIC
-    ${MTK_MT3620_DRIVER_INCLUDES}
     "${MTK_OS_HAL_ROOT}/inc"
+    ${MTK_MT3620_DRIVER_INCLUDES}
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    "${MTK_OS_HAL_ROOT}/inc"
+    ${MTK_MT3620_DRIVER_INCLUDES}
 )
 
 ##################################################################
