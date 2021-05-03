@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef LED_H
-#define LED_H 1
+#ifndef __LED_CLASS_H
+#define __LED_CLASS_H 
 
 #include <os_hal_gpio.h>
 
@@ -21,4 +21,4 @@ class Led {
 };
 
 
-#endif
+#endif // __LED_CLASS_H

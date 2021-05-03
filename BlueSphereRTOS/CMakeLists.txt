@@ -16,17 +16,34 @@ message("\r\n**** ${PROJECT_NAME} section\r\n")
 
 # build your project executable
 add_executable (${PROJECT_NAME}
-    "rtcoremain.cpp" 
-    "main.cpp" 
-    "tx_initialize_low_level.S" "Led.cpp")
+    "../startup/rtcoremain.cpp" 
+    "../startup/tx_initialize_low_level.S" 
+    "./src/Led.cpp" 
+    "./src/BlinkingLed.cpp" 
+    "./src/main.cpp" 
+)
 
+target_include_directories(${PROJECT_NAME} PUBLIC "./inc")
 
 ##################################################################
 #  MT3620_M4_Driver library section
 ##################################################################
-
 message("\r\n**** MT3620_M4_Driver library section\r\n")
 
+# set root directory for MTK submodule
+set(MTK_ROOT "../mt3620_m4_software")
+
+# set root directory for M4 driver & BSP
+set(MTK_MT3620_M4_DRIVER_ROOT "${MTK_ROOT}/MT3620_M4_Driver")
+set(MTK_MT3620_M4_BSP_ROOT "${MTK_ROOT}/MT3620_M4_BSP")
+
+set( MTK_MT3620_DRIVER_INCLUDES
+    "${MTK_MT3620_M4_DRIVER_ROOT}/MHAL/inc"
+    "${MTK_MT3620_M4_DRIVER_ROOT}/HDL/inc"
+    "${MTK_MT3620_M4_BSP_ROOT}/CMSIS/include"
+    "${MTK_MT3620_M4_BSP_ROOT}/mt3620/inc"
+    "${MTK_MT3620_M4_BSP_ROOT}/printf"
+)
 # add compiler definition for MT3620_M4_Driver library 
 add_compile_definitions(OSAI_AZURE_RTOS)
 #add_compile_definitions(OSAI_ENABLE_DMA)
@@ -34,18 +51,19 @@ add_compile_definitions(OSAI_AZURE_RTOS)
 # add_compile_definitions(M4_ENABLE_XIP_FLASH)
 
 # build MediaTek MT3620 M4 driver library, BSP and initial startup code into library libMT3620_M4_Driver.a
-add_subdirectory(  "./mt3620_m4_software/MT3620_M4_Driver" ".lib/MT3620_M4_Driver")
+add_subdirectory(  ${MTK_MT3620_M4_DRIVER_ROOT} "./lib/MT3620_M4_Driver")
 
 
 ##################################################################
 #  MTK_OS_HAL library section
 ##################################################################
-
 message("\r\n**** MTK_OS_HAL library section\r\n")
 
 set(MTK_OS_HAL "os_hal")
-set(MTK_OS_HAL_SRC "./mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/src")
-set(MTK_OS_HAL_INC "./mt3620_m4_software/MT3620_M4_Sample_Code/OS_HAL/inc")
+
+set(MTK_OS_HAL_ROOT "${MTK_ROOT}/MT3620_M4_Sample_Code/OS_HAL")
+set(MTK_OS_HAL_SRC "${MTK_OS_HAL_ROOT}/src")
+
 set(MTK_OS_HAL_FILES
     "${MTK_OS_HAL_SRC}/os_hal_adc.c"
     "${MTK_OS_HAL_SRC}/os_hal_dma.c"
@@ -66,29 +84,28 @@ set(MTK_OS_HAL_FILES
 
 #set(CMAKE_C_FLAGS "-mcpu=cortex-m4 -fno-common -mthumb  -mfloat-abi=hard -mfpu=fpv4-sp-d16")
 
+# build the OS HAL library
 add_library(${MTK_OS_HAL} ${MTK_OS_HAL_FILES})
-# add the OS_HAL header directory
-target_include_directories(${MTK_OS_HAL} PUBLIC "${MTK_OS_HAL_INC}")
+
+# add the OS_HAL, M4 Driver & BSP header directories
 target_include_directories(${MTK_OS_HAL} PUBLIC
-                            mt3620_m4_software/MT3620_M4_Driver/MHAL/inc
-                            mt3620_m4_software/MT3620_M4_Driver/HDL/inc
-                            mt3620_m4_software/MT3620_M4_BSP/CMSIS/include
-                            mt3620_m4_software/MT3620_M4_BSP/mt3620/inc
-                            mt3620_m4_software/MT3620_M4_BSP/printf)
-                            
+    ${MTK_MT3620_DRIVER_INCLUDES}
+    "${MTK_OS_HAL_ROOT}/inc"
+)
 
 ##################################################################
 #  Azure RTOS:threadX library section
 ##################################################################
 
 message("\r\n**** Azure RTOS:threadX library section\r\n")
+set(THREADX_ROOT "../threadx")
 
 # build Azure-RTOS ( threadX ) kernel for M4 core using Gnu toolchain into library libthreadx.a
 set(THREADX_ARCH "cortex_m4")
 set(THREADX_TOOLCHAIN "gnu")
 set(VFP_FLAGS "-mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16")
 #add_compile_definitions(TX_ENABLE_FPU_SUPPORT)
-add_subdirectory( "./threadx" ".lib/threadX")
+add_subdirectory( ${THREADX_ROOT} "./lib/threadX")
 
 
                             

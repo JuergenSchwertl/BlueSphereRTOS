@@ -8,8 +8,8 @@
 #include "Led.h"
 
 
-#define STACK_SIZE         1024
-#define BYTE_POOL_SIZE     8192
+#define THREAD_STACK_SIZE   1024
+#define BYTE_POOL_SIZE      8192
 
 
 
@@ -28,7 +28,7 @@ typedef enum _errnum_t {
 //volatile u8 blockFifoSema;
 
 
-static Led led(OS_HAL_GPIO_8);
+static Led* pLed = nullptr;
 
 
 /* Define thread prototypes.  */
@@ -48,6 +48,8 @@ int init_hardware(void)
         __asm__("nop");
     }*/
 
+    pLed = new Led(OS_HAL_GPIO_8);
+
     log_debug("ends\n");
     return iRet;
 }
@@ -56,24 +58,24 @@ void    tx_application_define(void* first_unused_memory)
 {
     log_debug("starts\n");
 
-    CHAR* pointer;
+    void * pBytePool;
 
     init_hardware();
 
     log_debug("create threads\n");
 
     /* Create a byte memory pool from which to allocate the thread stacks.  */
-    tx_byte_pool_create(&byte_pool, (CHAR *) "byte pool", memory_area, BYTE_POOL_SIZE);
+    tx_byte_pool_create(&byte_pool, (CHAR *) "ThreadStacks", memory_area, BYTE_POOL_SIZE);
 
     /* Put system definition stuff in here, e.g. thread creates and other assorted
        create information.  */
 
     /* Allocate the stack for main thread.  */
-    tx_byte_allocate(&byte_pool, (VOID**)&pointer, STACK_SIZE, TX_NO_WAIT);
+    tx_byte_allocate(&byte_pool, &pBytePool, THREAD_STACK_SIZE, TX_NO_WAIT);
 
     /* Create the main thread.  */
     tx_thread_create(&threadMain, (CHAR *) "main thread", main_thread, 0,
-        pointer, STACK_SIZE,
+        pBytePool, THREAD_STACK_SIZE,
         1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
 
     log_debug("ends\n");
@@ -87,8 +89,9 @@ void    main_thread(ULONG thread_input)
     /* This thread simply sits in while-forever-blink loop.  */
     while (1)
     {
-        led.Toggle();
-
+        if (pLed) {
+            pLed->Toggle();
+        }
 
         /* Sleep for 25 ticks == 25/100 = 1/4  sec.  */
         tx_thread_sleep(50);
@@ -97,6 +100,24 @@ void    main_thread(ULONG thread_input)
     log_debug("ends\n");
 }
 
+
+void blink_thread()
+{
+    log_debug("starts\n");
+
+    /* This thread simply sits in while-forever-blink loop.  */
+    while (1)
+    {
+        if (pLed) {
+            pLed->Toggle();
+        }
+
+        /* Sleep for 25 ticks == 25/100 = 1/4  sec.  */
+        tx_thread_sleep(50);
+    }
+
+    log_debug("starts\n");
+}
 
 int main(void)
 {

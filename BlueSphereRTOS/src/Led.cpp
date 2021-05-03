@@ -1,5 +1,3 @@
-#include "os_hal_gpio.h"
-
 #include "Led.h"
 
 
