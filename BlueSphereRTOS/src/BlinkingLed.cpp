@@ -1,6 +1,6 @@
 #include "BlinkingLed.h"
 
-#define WAIT_FOR_DEBUGGER
+//#define WAIT_FOR_DEBUGGER
 
 BlinkingLed::BlinkingLed(os_hal_gpio_pin gpioPin)
 	: Led(gpioPin)
@@ -39,7 +39,7 @@ void BlinkingLed::timer_isr(void* cb_data)
 void BlinkingLed::BlinkThreadHandler(ULONG thread_data)
 {
 
-	#ifdef WAIT_FOR_DEBUGGER
+#ifdef WAIT_FOR_DEBUGGER
     // Simple way to catch the debugger on startup. Just change nWait in the debugger to continue
     volatile int iWait = 1;
     while (iWait)
