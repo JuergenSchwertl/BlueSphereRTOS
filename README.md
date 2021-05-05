@@ -83,8 +83,10 @@ you will want to use a Hardware Abstraction Layer, namely the *MediaTek OS_HAL*.
 
 ## Understanding the MTK OS_HAL, MHAL, MDL and BSP_
 
-For some reason MediaTek chose to put the OS_HAL under samples so you find it under [MT3620_M4_Sample_Code/OS_HAL](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_Sample_Code/OS_HAL) 
-but it misses a CMakeLists.txt. You therefore need to add the files under the ./src-directory manually to your main CMakeLists.txt .
+For some reason MediaTek chose to put the OS_HAL under *samples* so you find it under 
+[/MT3620_M4_Sample_Code/OS_HAL](https://github.com/MediaTek-Labs/mt3620_m4_software/tree/master/MT3620_M4_Sample_Code/OS_HAL) 
+but it misses a CMakeLists.txt. You therefore need to add the files under the
+[/src](https://github.com/MediaTek-Labs/mt3620_m4_software/tree/master/MT3620_M4_Sample_Code/OS_HAL/src)-directory manually to your main CMakeLists.txt .
 You could elect to add individual hardware related sources (i.e. os_hal_gpio.c ) into your project or build them all together as a library and let the linker decide
 what functions to bind from the lib. In my example I chose to build it as a lib as you can see in the CMakeLists.txt under
 ```CMake
@@ -94,12 +96,12 @@ what functions to bind from the lib. In my example I chose to build it as a lib 
 ```
 
 Let's traverse the [MTK GitHub repo](https://github.com/MediaTek-Labs/mt3620_m4_software/) on the example of the uart initialisation function: `mtk_os_hal_uart_ctlr_init(OS_HAL_UART_PORT0)`.
-- In RTCoreMain we call the OS_HAL function [mtk_os_hal_uart_ctlr_init() in os_hal_uart.c](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_uart.c#L131)
-- which in turn calls the *MT3620_M4_Driver* - MHAL function [mtk_mhal_uart_hw_init() in mhal_uart.c](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_Driver/MHAL/src/mhal_uart.c#L77)
-- which in turn calls the *MT3620_M4_Driver* - HDL function [mtk_hdl_uart_init() in mhdl_uart.c](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_Driver/HDL/src/hdl_uart.c#L75)
+- In RTCoreMain we call the OS_HAL function [mtk_os_hal_uart_ctlr_init() in os_hal_uart.c](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_Sample_Code/OS_HAL/src/os_hal_uart.c#L131)
+- which in turn calls the *MT3620_M4_Driver* - MHAL function [mtk_mhal_uart_hw_init() in mhal_uart.c](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_Driver/MHAL/src/mhal_uart.c#L77)
+- which in turn calls the *MT3620_M4_Driver* - HDL function [mtk_hdl_uart_init() in mhdl_uart.c](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_Driver/HDL/src/hdl_uart.c#L75)
 - that finally sets the bare metal registers (*for some weird reason that is done one level up on MHAL in mhal_osai.c again, but anyway?*)
 
-The *MT3620_M4_Driver* directory has a [MT3620_M4_Driver/CMakeLists.txt](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_Driver/CMakeLists.txt), so we can add that in our main CMakeLists.txt as a subdirectory:
+The *MT3620_M4_Driver* directory has a [MT3620_M4_Driver/CMakeLists.txt](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_Driver/CMakeLists.txt), so we can add that in our main CMakeLists.txt as a subdirectory:
 ```CMake
     # add MediaTek MT3620 M4 driver library 
     add_subdirectory(mt3620_m4_software/MT3620_M4_Driver)
