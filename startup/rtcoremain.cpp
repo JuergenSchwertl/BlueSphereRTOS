@@ -27,6 +27,9 @@ void _putchar(char character);
 typedef void (*InitFunc)(void);
 extern InitFunc __init_array_start;
 extern InitFunc __init_array_end;
+extern void * __bss_start__;
+extern void * __bss_end__;
+extern void * StackTop;
 #ifdef __cplusplus
 }
 #endif
@@ -65,6 +68,13 @@ _Noreturn void RTCoreMain(void)
     mtk_os_hal_uart_ctlr_init(nUartPortNumber);
     
     printf("UART Initialized\n");
+
+    printf( "__bss_start__ : %#010x, __bss_end__ : %#010x, size = %d\n"
+            "__init_array_start : %#010x, __init_array_end : %#010x, size = %d\n"
+            "StackTop : %#010x\n", 
+            (UINT) &__bss_start__, (UINT) &__bss_end__, (UINT)&__bss_end__ - (UINT)&__bss_start__,
+            (UINT) &__init_array_start, (UINT) &__init_array_end, (UINT)&__init_array_end - (UINT)&__init_array_start,
+            (UINT) &StackTop);
 
 #ifdef __cplusplus
     // Call global constructors

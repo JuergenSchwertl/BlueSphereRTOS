@@ -5,13 +5,14 @@
 #include <os_hal_gpt.h>
 
 #include "globals.h"
+#include "Logger.h"
 #include "BlinkingLed.h"
 
 
-#define THREAD_STACK_SIZE   1024
-#define BYTE_POOL_SIZE      8192
+#define THREAD_STACK_SIZE   4096
+#define BYTE_POOL_SIZE      16383
 
-#define WAIT_FOR_DEBUGGER
+//#define WAIT_FOR_DEBUGGER
 
 
 // threadX specific variables
@@ -29,7 +30,7 @@ typedef enum _errnum_t {
 //volatile u8 blockFifoSema;
 
 
-static BlinkingLed* pLed = nullptr;
+static BlinkingLed* pBlinkingLed = nullptr;
 
 
 /* Define thread prototypes.  */
@@ -39,7 +40,7 @@ void    main_thread(ULONG thread_input);
 
 int init_hardware(void)
 {
-    log_debug("starts\n");
+    log_enter();
     // initialize hardware
     int iRet = 0;
 
@@ -51,21 +52,23 @@ int init_hardware(void)
     
 	/* Init GPT */
 	mtk_os_hal_gpt_init();
- 
+    pBlinkingLed = new BlinkingLed(OS_HAL_GPIO_8);
 
-    log_debug("ends\n");
+	log_debug("&pLed (static) : %#010x, pLed : %#010x", (UINT) &pBlinkingLed, (UINT) pBlinkingLed);
+
+    log_exit();
     return iRet;
 }
 
-void    tx_application_define(void* first_unused_memory)
+void tx_application_define(void* first_unused_memory)
 {
-    log_debug("starts\n");
+    log_enter();
 
     void * pBytePool;
 
     init_hardware();
 
-    log_debug("create threads\n");
+    log_message("create threads.");
 
     /* Create a byte memory pool from which to allocate the thread stacks.  */
     tx_byte_pool_create(&byte_pool, (CHAR *) "ThreadStacks", memory_area, BYTE_POOL_SIZE);
@@ -85,17 +88,17 @@ void    tx_application_define(void* first_unused_memory)
     tx_byte_allocate(&byte_pool, &pBytePool, THREAD_STACK_SIZE, TX_NO_WAIT);
 
     /* Create the main thread.  */
-    tx_thread_create(&threadBlinkingLed, (CHAR*)"blink thread", BlinkingLed::BlinkThreadHandler, (ULONG)pLed,
+    tx_thread_create(&threadBlinkingLed, (CHAR*)"blink thread", BlinkingLed::BlinkThreadHandler, (ULONG)pBlinkingLed,
         pBytePool, THREAD_STACK_SIZE,
         1, 1, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-    log_debug("ends\n");
+    log_exit();
 }
 
 void    main_thread(ULONG thread_input)
 {
     /* Print results.  */
-    log_debug("starts\n");
+    log_enter();
 
     /* This thread simply sits in while-forever loop.  */
     while (1)
@@ -106,7 +109,7 @@ void    main_thread(ULONG thread_input)
         tx_thread_sleep(100);
     }
 
-    log_debug("ends\n");
+    log_exit();
 }
 
 

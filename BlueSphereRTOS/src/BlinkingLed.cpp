@@ -1,5 +1,5 @@
 #include "BlinkingLed.h"
-
+#include "Logger.h"
 //#define WAIT_FOR_DEBUGGER
 
 BlinkingLed::BlinkingLed(os_hal_gpio_pin gpioPin)
@@ -38,6 +38,7 @@ void BlinkingLed::timer_isr(void* cb_data)
 
 void BlinkingLed::BlinkThreadHandler(ULONG thread_data)
 {
+	log_enter();
 
 #ifdef WAIT_FOR_DEBUGGER
     // Simple way to catch the debugger on startup. Just change nWait in the debugger to continue
@@ -49,7 +50,9 @@ void BlinkingLed::BlinkThreadHandler(ULONG thread_data)
 #endif
 
 	ULONG   actual_flags;
-	BlinkingLed* pLed = new BlinkingLed(OS_HAL_GPIO_8);
+	BlinkingLed* pLed = (BlinkingLed *) thread_data;
+
+	log_debug("&pLed (thread stack) : %#010x, pLed : %#010x", (UINT) &pLed, (UINT) pLed);
 
 	while (1)
 	{
@@ -63,4 +66,6 @@ void BlinkingLed::BlinkThreadHandler(ULONG thread_data)
 
 		pLed->Toggle();
 	}
+
+	log_exit();
 }
