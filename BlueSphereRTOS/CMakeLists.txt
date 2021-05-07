@@ -16,8 +16,8 @@ message("\r\n**** ${PROJECT_NAME} section\r\n")
 
 # build your project executable
 add_executable (${PROJECT_NAME}
-    "../startup/rtcoremain.cpp" 
-    "../startup/tx_initialize_low_level.S" 
+    "startup/rtcoremain.cpp" 
+    "startup/tx_initialize_low_level.S" 
     "src/Logger.cpp" 
     "src/Led.cpp" 
     "src/BlinkingLed.cpp"
