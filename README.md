@@ -128,7 +128,7 @@ It creates the library *MT3620_M4_Diver* that we need to add in our linker defin
     target_link_libraries (${PROJECT_NAME}  MT3620_M4_Driver azrtos::threadx)
 ```
 
-The *MT3620_M4_Driver* does also build the underlying *MT3620_M4_BSP* using it's [MT3620_M4_BSP/CMakeLists.txt](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_BSP/CMakeLists.txt) 
+The *MT3620_M4_Driver* does also build the underlying *MT3620_M4_BSP* using it's [MT3620_M4_BSP/CMakeLists.txt](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_BSP/CMakeLists.txt) 
 and already links it to the driver lib. The BSP (Binary Support Package) contains the low level initialisation routines and interrupt vector table definition and alike.
 It also comes with teh beforementioned `printf()`-implementation that helps us with debug logging.
 
@@ -138,17 +138,17 @@ Let's now have a look on the detailed startup sequence and what it takes to also
 
 ### MT3620 startup sequence
 
-The very first startup code (a.k.a Reset vector) is part of the [MT3620_M4_BSP](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_BSP/CMakeLists.txt) , 
-and implemented in Assembly in [startup_mt3620.s](./mt3620_m4_software/blob/d9ac51feac9843af769b3d9783bfd8b9407e79bc/MT3620_M4_BSP/mt3620/src/startup_mt3620.s) cleaning up the memory 
-and immediately branches into our [_Noreturn void RTCoreMain(void)](./startup/rtcoremain.cpp#L38).
+The very first startup code (a.k.a Reset vector) is part of the [MT3620_M4_BSP](https://github.com/MediaTek-Labs/blob/master/mt3620_m4_software/MT3620_M4_BSP/CMakeLists.txt) , 
+and implemented in Assembly in [startup_mt3620.s](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_BSP/mt3620/src/startup_mt3620.s) cleaning up the memory 
+and immediately branches into our [_Noreturn void RTCoreMain(void)](./BlueSphereRTOS/startup/rtcoremain.cpp#L38).
 
-Here we initialize the Interrupt Vector Table using the [`NVIC_SetupVectorTable` function in the MT3620_M4_BSP](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_BSP/mt3620/src/nvic.c#L84)
+Here we initialize the Interrupt Vector Table using the [`NVIC_SetupVectorTable` function in the MT3620_M4_BSP](https://github.com/MediaTek-Labs/blob/master/mt3620_m4_software/blob/master/MT3620_M4_BSP/mt3620/src/nvic.c#L84)
 ```C
     // Init Vector Table
     NVIC_SetupVectorTable();
 ```
 
-Then you can do yourlittle trick to wait for the Debugger to have a chance to connect to the M4 core. To get our logging working,
+Then you can do your little trick to wait for the Debugger to have a chance to connect to the M4 core. To get our logging working,
 we then initialize the DEBUG UART
 
 ```C
@@ -183,12 +183,19 @@ int main(void)
 ```  
 
 As you can see it just sets up the kernel and will actually never return. Implicitly it calls into low level Assembly code setting up the 100Hz SysTick
-timer interrupt and service routine in [tx_initialize_low_level.S](./startup/tx_initialize_low_level.S) and then calls into:
+timer interrupt and service routine in [tx_initialize_low_level.S](./BlueSphereRTOS/startup/tx_initialize_low_level.S) and then calls into:
 ```C
 void tx_application_define(void* first_unused_memory)
 ```
 Here you can initialize hardware as appropriate and start your application threads...
 
-If you now wonder why I didn't put that startup code neatly together into rtcoremain.cpp? The reason is a incompatibility 
-in header files. rtcoremain.cpp has an `#include "mt3620.h"` and main.cpp has an `#include "tx_api.h"
-`
+If you now wonder why I didn't put that startup code neatly together into rtcoremain.cpp? The reason is an incompatibility 
+in header files. rtcoremain.cpp has an `#include "mt3620.h"` and main.cpp has an `#include "tx_api.h"` and 
+somewhere down the chain there is a conflicting declaration of CHAR which leads the compiler to bail out with an error 
+if both are included. Unfortunately Mediatek chose to use `typedef `**`signed`**` char  CHAR;` in
+[*type_def.h*](https://github.com/MediaTek-Labs/mt3620_m4_software/blob/master/MT3620_M4_BSP/mt3620/inc/type_def.h#L72)
+
+
+
+
+
